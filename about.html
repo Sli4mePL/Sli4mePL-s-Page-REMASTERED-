@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body {
+            color: white; 
+            min-height: 100vh; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            padding: 20px; overflow: hidden;
+            position: relative;
+            user-select: none; /* Blokuje zaznaczanie tekstu przy szybkim klikaniu */
+        }
+        
+        #bg-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; 
+            cursor: crosshair;
+        }
+
+        .content {
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            pointer-events: auto; /* Pozwala klikać w przyciski */
+        }
+
+        .overlay-wrapper { pointer-events: none; position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; }
+
+        h1 { color: #a82eff; font-size: 4rem; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8); }
+        p { max-width: 700px; font-size: 1.3rem; margin-bottom: 40px; line-height: 1.5; pointer-events: auto;}
+        .buttons-container { display: flex; gap: 20px; justify-content: center; pointer-events: auto;}
+        .btn { border: none; cursor: pointer; padding: 15px 35px; font-size: 1.1rem; font-weight: bold; color: black; text-decoration: none; background-color: #a82eff; border-radius: 12px; box-shadow: 0 8px 20px rgba(168, 46, 255, 0.4); transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-7px); background-color: #bc61ff; }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="overlay-wrapper">
+        <div class="content">
+            <h1>About Me</h1>
+            <p id="tekst-o-mnie">Hi, Im Sli4mePL Im An Dev Im Currently Making An Game "I'm Ready!" Im In Dimenthia Games Game Studio And I Like AirSoft!
+            </p>
+            
+            <div class="buttons-container">
+                <button id="read-btn" class="btn">Narrator</button>
+                <a href="index.html" class="btn">Go Back!</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrypt Lektora -->
+    <script>
+        const readBtn = document.getElementById('read-btn');
+        const textToRead = document.getElementById('tekst-o-mnie').innerText;
+
+        readBtn.addEventListener('click', () => {
+            window.speechSynthesis.cancel(); 
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.lang = 'Eng-Eng'; 
+            utterance.rate = 1;       
+            utterance.pitch = 0;      
+            window.speechSynthesis.speak(utterance);
+        });
+    </script>
+
+    <!-- Silnik Interaktywny -->
+    <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); 
+        
+        let groundY;
+        let buildings = [];
+
+        // System Drag & Drop
+        let mouseX = 0;
+        let mouseY = 0;
+        let draggedObj = null;
+        let dragType = null; 
+
+        // ZMIANA: Event listenery przypisane do obiektu window, aby ignorować body
+        window.addEventListener('contextmenu', (e) => {
+            // Zapobiega eksplozjom, gdy klikniesz w menu tekstu
+            if (e.target.closest('.content')) return; 
+            
+            e.preventDefault(); 
+            createExplosion(e.clientX, e.clientY, 40, true, 150); 
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.content')) return; 
+
+            if (e.button === 0) { 
+                // Chwytanie jednostek
+                for (let i = entities.length - 1; i >= 0; i--) {
+                    let ent = entities[i];
+                    if (!ent.dead && e.clientX > ent.x && e.clientX < ent.x + ent.width && e.clientY > ent.y && e.clientY < ent.y + ent.height) {
+                        draggedObj = ent;
+                        dragType = 'entity';
+                        return;
+                    }
+                }
+                // Chwytanie budynków
+                for (let i = buildings.length - 1; i >= 0; i--) {
+                    let b = buildings[i];
+                    if (!b.collapsed && e.clientX > b.x && e.clientX < b.x + b.width && e.clientY > b.y && e.clientY < b.y + b.height) {
+                        draggedObj = b;
+                        dragType = 'building';
+                        b.isRipped = true;
+                        return;
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (draggedObj) {
+                if (dragType === 'entity') {
+                    draggedObj.x = mouseX - draggedObj.width / 2;
+                    draggedObj.y = mouseY - draggedObj.height / 2;
+                    draggedObj.vy = 0; 
+                } else if (dragType === 'building') {
+                    draggedObj.x = mouseX - draggedObj.width / 2;
+                    draggedObj.y = mouseY - draggedObj.height / 2;
+                    draggedObj.vy = 0;
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 0 && draggedObj) {
+                draggedObj = null;
+                dragType = null;
+            }
+        });
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false;
+            groundY = canvas.height - 80;
+            generateCity();
+        }
+
+        function generateCity() {
+            buildings = [];
+            let currentX = 0;
+            while (currentX < canvas.width) {
+                const width = 60 + Math.random() * 80;
+                const height = 150 + Math.random() * 350;
+                const shade = 15 + Math.random() * 20; 
+                buildings.push({
+                    x: currentX,
+                    y: canvas.height - height,
+                    width: width,
+                    height: height,
+                    maxHeight: height,
+                    health: (width * height) / 80, 
+                    collapsed: false,
+                    isRipped: false,
+                    vy: 0,
+                    color: `hsl(220, 10%, ${shade}%)`,
+                    holes: [] 
+                });
+                currentX += width + (Math.random() * 20);
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        const entities = [];
+        const particles = [];
+        const MAX_PARTICLES = 1000; 
+
+        function getSkyColor() {
+            const now = new Date();
+            const time = now.getHours() + now.getMinutes() / 60;
+            if (time >= 20 || time < 5) return '#0a0a1a'; 
+            if (time >= 5 && time < 7) return '#2c1e3a';  
+            if (time >= 7 && time < 9) return '#ff7b54';  
+            if (time >= 9 && time < 17) return '#4A90E2'; 
+            if (time >= 17 && time < 19) return '#fd5e53'; 
+            if (time >= 19 && time < 20) return '#4b2a4c'; 
+            return '#0a0a1a';
+        }
+
+        class Particle {
+            constructor(x, y, vx, vy, color, life, size, type = 'normal', isEnemy = false, damage = 0) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.color = color;
+                this.life = life;
+                this.maxLife = life;
+                this.size = size;
+                this.type = type; 
+                this.isEnemy = isEnemy;
+                this.damage = damage;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (this.type === 'debris' || this.type === 'bomb' || this.type === 'blood') {
+                    this.vy += 0.3; 
+                } else if (this.type === 'dust') {
+                    this.vy -= 0.05; 
+                    this.size += 0.1; 
+                }
+
+                if ((this.type === 'debris' || this.type === 'blood') && this.y >= groundY - this.size) {
+                    this.y = groundY - this.size;
+                    this.vy *= -0.4; 
+                    this.vx *= 0.7;  
+                }
+                this.life--;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                if (this.type === 'dust' || this.type === 'explosion') {
+                    ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+                }
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), Math.trunc(this.size), Math.trunc(this.size));
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class Entity {
+            constructor() {
+                this.dir = Math.random() > 0.5 ? 1 : -1;
+                this.isEnemy = this.dir === -1;
+                this.dead = false;
+                this.state = 'move'; 
+                this.vy = 0;
+                this.isFlying = false;
+                this.target = null;
+            }
+            
+            scanForTarget(range) {
+                this.target = null;
+                for (let e of entities) {
+                    if (e.isEnemy !== this.isEnemy && !e.dead) {
+                        let dist = Math.hypot(e.x - this.x, e.y - this.y);
+                        if (dist < range && ((e.x - this.x) * this.dir > 0 || this.isFlying)) {
+                            this.target = e;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            applyGravity() {
+                if (draggedObj === this) return; 
+                if (!this.isFlying && this.y < groundY - this.height) {
+                    this.vy += 0.5; 
+                    this.y += this.vy;
+                } else if (!this.isFlying && this.y >= groundY - this.height) {
+                    if (this.vy > 8) this.health -= this.vy * 5; 
+                    this.y = groundY - this.height;
+                    this.vy = 0;
+                }
+            }
+        }
+
+        class Soldier extends Entity {
+            constructor() {
+                super();
+                this.width = 10;
+                this.height = 20;
+                this.x = this.dir === 1 ? -20 : canvas.width + 20;
+                this.y = groundY - this.height;
+                this.baseSpeed = Math.random() * 0.8 + 0.4;
+                this.vx = this.baseSpeed * this.dir;
+                this.shootTimer = 0;
+                this.health = 20;
+                this.attackRange = 250;
+                this.color = this.isEnemy ? '#8b2222' : '#4b5320'; 
+                this.bulletColor = this.isEnemy ? '#ff4444' : '#ffff00';
+            }
+            update() {
+                this.applyGravity();
+                if (this.health <= 0) {
+                    this.dead = true;
+                    createBlood(this.x + 5, this.y + 10, 10);
+                    return;
+                }
+                if (draggedObj === this) return;
+
+                if (this.scanForTarget(this.attackRange)) {
+                    this.state = 'attack';
+                    this.vx = 0; 
+                } else {
+                    this.state = 'move';
+                    this.vx = this.baseSpeed * this.dir; 
+                }
+
+                this.x += this.vx;
+
+                if (this.state === 'attack') {
+                    this.shootTimer--;
+                    if (this.shootTimer <= 0) {
+                        addParticle(this.x + (this.dir === 1 ? 15 : -5), this.y + 5, this.dir * 8, (Math.random() - 0.5), this.bulletColor, 40, 3, 'bullet', this.isEnemy, 10);
+                        this.shootTimer = Math.random() * 50 + 30; 
+                    }
+                }
+            }
+            draw() {
+                if (this.dead) return;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), this.width, this.height);
+                ctx.fillStyle = '#111';
+                let weaponY = this.state === 'attack' ? 6 : 10;
+                ctx.fillRect(Math.trunc(this.x) + (this.dir === 1 ? 5 : -10), Math.trunc(this.y) + weaponY, 15, 4);
+            }
+        }
+
+        class Sniper extends Entity {
+            constructor() {
+                super();
+                this.width = 10;
+                this.height = 20;
+                this.x = this.dir === 1 ? -20 : canvas.width + 20;
+                this.y = groundY - this.height;
+                this.baseSpeed = Math.random() * 0.3 + 0.1; 
+                this.vx = this.baseSpeed * this.dir;
+                this.shootTimer = 0;
+                this.health = 15;
+                this.attackRange = 600; 
+                this.color = this.isEnemy ? '#550000' : '#223311'; 
+            }
+            update() {
+                this.applyGravity();
+                if (this.health <= 0) {
+                    this.dead = true;
+                    createBlood(this.x + 5, this.y + 10, 10);
+                    return;
+                }
+                if (draggedObj === this) return;
+
+                if (this.scanForTarget(this.attackRange)) {
+                    this.state = 'attack';
+                    this.vx = 0; 
+                } else {
+                    this.state = 'move';
+                    this.vx = this.baseSpeed * this.dir; 
+                }
+
+                this.x += this.vx;
+
+                if (this.state === 'attack' && this.target) {
+                    this.shootTimer--;
+                    if (this.shootTimer <= 0) {
+                        let dx = this.target.x - this.x;
+                        let dy = this.target.y - this.y;
+                        let angle = Math.atan2(dy, dx);
+                        addParticle(this.x + 5, this.y + 5, Math.cos(angle)*15, Math.sin(angle)*15, '#fff', 50, 2, 'bullet', this.isEnemy, 50);
+                        this.shootTimer = 150; 
+                    }
+                }
+            }
+            draw() {
+                if (this.dead) return;
+                
+                if (this.state === 'attack' && this.target && this.shootTimer < 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 5, this.y + 6);
+                    ctx.lineTo(this.target.x + this.target.width/2, this.target.y + this.target.height/2);
+                    ctx.strokeStyle = this.isEnemy ? 'rgba(255, 0, 0, 0.4)' : 'rgba(0, 255, 0, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), this.width, this.height);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(Math.trunc(this.x) + (this.dir === 1 ? 5 : -15), Math.trunc(this.y) + 6, 20, 3); 
+            }
+        }
+
+        class Tank extends Entity {
+            constructor() {
+                super();
+                this.width = 50;
+                this.height = 30;
+                this.x = this.dir === 1 ? -100 : canvas.width + 100;
+                this.y = groundY - this.height;
+                this.baseSpeed = Math.random() * 0.3 + 0.2;
+                this.vx = this.baseSpeed * this.dir;
+                this.shootTimer = 0;
+                this.health = 150;
+                this.attackRange = 400;
+                this.color = this.isEnemy ? '#5a2e2e' : '#2f4f4f'; 
+            }
+            update() {
+                this.applyGravity();
+                if (this.health <= 0) {
+                    this.dead = true;
+                    createExplosion(this.x + 25, this.y + 15, 30, true);
+                    return;
+                }
+                if (draggedObj === this) return;
+
+                if (this.scanForTarget(this.attackRange)) {
+                    this.state = 'attack';
+                    this.vx = 0; 
+                } else {
+                    this.state = 'move';
+                    this.vx = this.baseSpeed * this.dir; 
+                }
+
+                this.x += this.vx;
+
+                if (this.state === 'attack') {
+                    this.shootTimer--;
+                    if (this.shootTimer <= 0) {
+                        addParticle(this.x + (this.dir === 1 ? 50 : -20), this.y - 12, this.dir * 12, 0, '#ff4500', 60, 6, 'bullet', this.isEnemy, 60);
+                        createExplosion(this.x + (this.dir === 1 ? 55 : -25), this.y - 12, 10, false); 
+                        this.shootTimer = Math.random() * 100 + 100; 
+                    }
+                }
+            }
+            draw() {
+                if (this.dead) return;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), this.width, this.height);
+                ctx.fillRect(Math.trunc(this.x) + 10, Math.trunc(this.y) - 15, 30, 15);
+                ctx.fillStyle = '#111';
+                ctx.fillRect(Math.trunc(this.x) + (this.dir === 1 ? 30 : -20), Math.trunc(this.y) - 10, 40, 6);
+            }
+        }
+
+        class Helicopter extends Entity {
+            constructor() {
+                super();
+                this.width = 40;
+                this.height = 20;
+                this.isFlying = true;
+                this.x = this.dir === 1 ? -80 : canvas.width + 80;
+                this.y = Math.random() * (canvas.height / 2) - 50;
+                this.speed = Math.random() * 2 + 1;
+                this.rotorAngle = 0;
+                this.shootTimer = 50;
+                this.health = 50;
+                this.attackRange = 300;
+                this.color = this.isEnemy ? '#3a1a1a' : '#223';
+                this.bulletColor = this.isEnemy ? '#ff4444' : '#ffff00';
+            }
+            update() {
+                if (this.health <= 0) {
+                    this.dead = true;
+                    createExplosion(this.x + 20, this.y + 10, 20, true);
+                    return;
+                }
+                if (draggedObj === this) return;
+
+                this.x += this.speed * this.dir;
+                this.y += Math.sin(Date.now() / 200) * 0.5; 
+                this.rotorAngle += 0.5;
+                
+                if (this.scanForTarget(this.attackRange)) {
+                    this.shootTimer--;
+                    if (this.shootTimer <= 0) {
+                        let dx = this.target.x - this.x;
+                        let dy = this.target.y - this.y;
+                        let angle = Math.atan2(dy, dx);
+                        addParticle(this.x + 20, this.y + 15, Math.cos(angle)*6, Math.sin(angle)*6, this.bulletColor, 50, 3, 'bullet', this.isEnemy, 8);
+                        this.shootTimer = 10; 
+                    }
+                }
+            }
+            draw() {
+                if (this.dead) return;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), this.width, this.height); 
+                ctx.fillRect(Math.trunc(this.x) + (this.dir === 1 ? -20 : 40), Math.trunc(this.y) + 5, 20, 5); 
+                
+                ctx.fillStyle = '#999';
+                const rotorWidth = 50 * Math.abs(Math.cos(this.rotorAngle));
+                ctx.fillRect(Math.trunc(this.x) + 20 - rotorWidth / 2, Math.trunc(this.y) - 5, rotorWidth, 3);
+            }
+        }
+
+        class Plane extends Entity {
+            constructor() {
+                super();
+                this.width = 50;
+                this.height = 12;
+                this.isFlying = true;
+                this.x = this.dir === 1 ? -100 : canvas.width + 100;
+                this.y = Math.random() * (canvas.height / 3);
+                this.speed = Math.random() * 4 + 3;
+                this.dropTimer = Math.random() * 80 + 40;
+                this.health = 30;
+                this.color = this.isEnemy ? '#442222' : '#778899';
+            }
+            update() {
+                if (this.health <= 0) {
+                    this.dead = true;
+                    createExplosion(this.x + 25, this.y + 5, 20, false);
+                    return;
+                }
+                if (draggedObj === this) return;
+
+                this.x += this.speed * this.dir;
+                this.dropTimer--;
+                if (this.dropTimer <= 0) {
+                    addParticle(this.x + 15, this.y + 10, this.dir * 2, 2, '#222', 120, 6, 'bomb', this.isEnemy, 100); 
+                    this.dropTimer = Math.random() * 100 + 80;
+                }
+            }
+            draw() {
+                if (this.dead) return;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.trunc(this.x), Math.trunc(this.y), this.width, this.height); 
+                ctx.fillRect(Math.trunc(this.x) + 20, Math.trunc(this.y) - 10, 10, 30); 
+                ctx.fillStyle = '#ff4500';
+                ctx.fillRect(Math.trunc(this.x) + (this.dir === 1 ? -5 : 50), Math.trunc(this.y) + 3, 5, 6); 
+            }
+        }
+
+        function addParticle(x, y, vx, vy, color, life, size, type, isEnemy = false, damage = 0) {
+            if (particles.length < MAX_PARTICLES) {
+                particles.push(new Particle(x, y, vx, vy, color, life, size, type, isEnemy, damage));
+            }
+        }
+
+        function createExplosion(x, y, amount, damageRadius = true, customDamage = 20) {
+            const colors = ['#ff0000', '#ff4500', '#ffa500', '#ffff00', '#fff'];
+            for (let i = 0; i < amount; i++) {
+                const vx = (Math.random() - 0.5) * 15;
+                const vy = (Math.random() - 0.5) * 15;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                addParticle(x, y, vx, vy, color, Math.random() * 25 + 10, Math.random() * 8 + 2, 'explosion');
+            }
+            if (damageRadius) damageCity(x, y, customDamage);
+        }
+
+        function createBlood(x, y, amount) {
+            for (let i = 0; i < amount; i++) {
+                const vx = (Math.random() - 0.5) * 6;
+                const vy = (Math.random() - 1) * 5;
+                addParticle(x, y, vx, vy, '#8b0000', Math.random() * 40 + 20, Math.random() * 4 + 2, 'blood');
+            }
+        }
+
+        function damageCity(ex, ey, damage = 20) {
+            for (let b of buildings) {
+                if (b.collapsed) continue;
+                
+                if (ex > b.x - 30 && ex < b.x + b.width + 30 && ey > b.y) {
+                    b.health -= damage; 
+                    
+                    for(let i=0; i<8; i++) {
+                        addParticle(ex, ey, (Math.random()-0.5)*12, (Math.random()*-8) - 2, b.color, 80, Math.random()*8+4, 'debris');
+                    }
+
+                    if (b.health <= 0) {
+                        b.collapsed = true;
+                        b.isRipped = false;
+                        for(let i=0; i<40; i++) {
+                            addParticle(b.x + Math.random() * b.width, b.y + b.height - 10, (Math.random()-0.5)*20, (Math.random()*-8), '#555', 60, Math.random()*15+10, 'dust');
+                        }
+                    } else {
+                        b.holes.push({ x: ex - b.x, y: ey - b.y, size: Math.random() * 30 + 15 });
+                    }
+                }
+            }
+            
+            for (let e of entities) {
+                if (!e.dead && Math.hypot(e.x + e.width/2 - ex, e.y + e.height/2 - ey) < 60) {
+                    e.health -= damage * 2;
+                }
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = getSkyColor();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const currentSkyColor = ctx.fillStyle; 
+
+            for (let b of buildings) {
+                if (b.isRipped && draggedObj !== b) {
+                    b.vy += 0.8; 
+                    b.y += b.vy;
+                    if (b.y >= canvas.height - b.height) {
+                        b.y = canvas.height - b.height;
+                        b.isRipped = false;
+                        if (b.vy > 5) {
+                            b.health -= b.vy * 15;
+                            createExplosion(b.x + b.width/2, b.y + b.height, 30, true, b.vy * 10);
+                        }
+                        b.vy = 0;
+                    }
+                }
+
+                if (b.collapsed && b.height > 10) {
+                    b.height -= 5; 
+                    b.y += 5; 
+                    if (Math.random() < 0.4) { 
+                        addParticle(b.x + Math.random() * b.width, b.y + b.height, (Math.random()-0.5)*8, (Math.random()*-3), '#444', 40, Math.random()*12+5, 'dust');
+                    }
+                }
+
+                ctx.fillStyle = b.color;
+                ctx.fillRect(Math.trunc(b.x), Math.trunc(b.y), Math.trunc(b.width), Math.trunc(b.height));
+                
+                ctx.fillStyle = currentSkyColor;
+                for (let h of b.holes) {
+                    let hy = b.y + h.y; 
+                    if (hy > b.y && hy < b.y + b.height) {
+                        ctx.fillRect(Math.trunc(b.x + h.x - h.size/2), Math.trunc(hy - h.size/2), Math.trunc(h.size), Math.trunc(h.size));
+                    }
+                }
+            }
+
+            ctx.fillStyle = '#1a261a';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+            if (Math.random() < 0.02 && entities.length < 50) entities.push(new Soldier());
+            if (Math.random() < 0.005 && entities.length < 8) entities.push(new Sniper());
+            if (Math.random() < 0.005 && entities.length < 12) entities.push(new Tank());
+            if (Math.random() < 0.003 && entities.length < 5) entities.push(new Plane());
+            if (Math.random() < 0.004 && entities.length < 6) entities.push(new Helicopter());
+
+            for (let i = entities.length - 1; i >= 0; i--) {
+                entities[i].update();
+                entities[i].draw();
+                
+                if (entities[i].dead || entities[i].x < -200 || entities[i].x > canvas.width + 200 || entities[i].y > canvas.height + 100) {
+                    entities.splice(i, 1);
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.update();
+                p.draw();
+                
+                if (p.type === 'bullet' || p.type === 'bomb') {
+                    for (let e of entities) {
+                        if (!e.dead && e.isEnemy !== p.isEnemy) {
+                            if (p.x > e.x && p.x < e.x + e.width && p.y > e.y && p.y < e.y + e.height) {
+                                e.health -= p.damage;
+                                if (p.type === 'bomb') createExplosion(p.x, p.y, 15, false);
+                                else addParticle(p.x, p.y, 0, 0, '#fff', 5, 4, 'explosion'); 
+                                p.life = 0; 
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (p.type === 'bomb') {
+                    for (let b of buildings) {
+                        if (!b.collapsed && p.x > b.x && p.x < b.x + b.width && p.y > b.y && p.y < b.y + b.height) {
+                            createExplosion(p.x, p.y, 20, true, 40);
+                            p.life = 0;
+                            break;
+                        }
+                    }
+                }
+
+                if (p.y >= groundY && p.type === 'bomb') {
+                    createExplosion(p.x, groundY, 20, true, 40);
+                    p.life = 0;
+                }
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

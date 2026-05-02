@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sli4mePL's Site!</title>
+    <style>
+        /* Reset marginesów */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            /* TŁO: Placeholder pod Twoje zdjęcie */
+            background-image: url(Img/tlo1.png);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: rgba(0, 0, 0, 0.7);
+            background-blend-mode: overlay;
+
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Sekcja tekstowa na samej górze */
+        .header {
+            position: absolute;
+            top: 40px; 
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Napis główny - fioletowy */
+        h1 {
+            font-size: 4.5rem;
+            color: #a82eff; 
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        h1:hover {
+            transform: scale(1.03);
+        }
+
+        /* Mniejszy napis - teraz TEŻ fioletowy */
+        p.subtitle {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #a82eff; 
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Przyciski na środku */
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: black; /* CZARNY NAPIS NA PRZYCISKACH */
+            text-decoration: none;
+            background-color: #a82eff; 
+            border-radius: 12px;
+            
+            /* Płaski wygląd z fioletową poświatą/cieniem */
+            box-shadow: 0 8px 20px rgba(168, 46, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        /* Animacja podnoszenia */
+        .btn:hover {
+            transform: translateY(-7px);
+            background-color: #bc61ff;
+            box-shadow: 0 15px 30px rgba(168, 46, 255, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0px);
+        }
+
+        /* BIAŁY EKRAN (Sekret) */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .overlay h2 {
+            color: black;
+            font-size: 4rem;
+            font-family: 'Arial Black', sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="white-screen" class="overlay">
+        <h2 id="secret-text"></h2>
+    </div>
+
+    <div class="header">
+        <h1 id="title-btn">Sli4mePL's Site!</h1>
+        <p class="subtitle">Welcome To My Site Thx For Visiting!</p>
+    </div>
+
+    <div class="buttons-container">
+        <a href="about.html" class="btn">About me</a>
+        <a href="games.html" class="btn">Games</a>
+        <a href="info.html" class="btn">Info</a>
+        <a href="updates.html" class="btn">Updates</a>
+        <a href="setup.html" class="btn">My setup</a>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        const titleButton = document.getElementById('title-btn');
+        const overlay = document.getElementById('white-screen');
+        const secretText = document.getElementById('secret-text');
+
+        titleButton.addEventListener('click', function() {
+            clickCount++;
+
+            if (clickCount === 1) {
+                secretText.innerText = "Dont Click Me :[";
+            } else {
+                secretText.innerText = "Why Did You Click Me >:c";
+            }
+
+            overlay.classList.add('active');
+
+            setTimeout(function() {
+                overlay.classList.remove('active');
+            }, 2500);
+        });
+    </script>
+
+</body>
+</html>
