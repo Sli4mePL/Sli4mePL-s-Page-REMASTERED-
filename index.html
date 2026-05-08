@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sli4mePL's Site!</title>
+    <!-- Biblioteka do konfetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Czcionka cyfrowa -->
+    <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
     <style>
-        /* Reset marginesów */
         * {
             margin: 0;
             padding: 0;
@@ -14,95 +17,178 @@
         }
 
         body {
-            /* TŁO: Placeholder pod Twoje zdjęcie */
-            background-image: url(Img/tlo1.png);
+            background-image: url('Img/tlo1.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.4); 
             background-blend-mode: overlay;
-
             color: white;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             position: relative;
+            transition: transform 1s ease-in-out, filter 0.3s ease, background-color 2s ease;
+            overflow-x: hidden; 
+            cursor: pointer;
         }
 
-        /* Sekcja tekstowa na samej górze */
+        body.night-mode {
+            background-color: rgba(5, 5, 20, 0.85); 
+        }
+
+        body.upside-down {
+            transform: rotate(180deg);
+        }
+
+        body.bright {
+            filter: brightness(1.2);
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            background-blend-mode: soft-light;
+        }
+
+        .secret-settings-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .gear-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .gear-icon {
+            font-size: 2rem;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            display: inline-block;
+        }
+
+        .settings-text {
+            font-weight: bold;
+            color: #a82eff;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(168, 46, 255, 0.5);
+        }
+
+        .gear-wrapper:hover .gear-icon { transform: rotate(180deg); }
+        .gear-wrapper:hover .settings-text { opacity: 1; transform: translateX(0); }
+
+        .settings-menu {
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #a82eff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .settings-menu.visible { display: flex; }
+
+        .super-secret-btn, .enable-fun-btn, .clock-toggle-btn, .friend-btn {
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+            display: block;
+        }
+
+        .enable-fun-btn { background-color: #a82eff; }
+        .super-secret-btn { background-color: #ff2e2e; }
+        .clock-toggle-btn { background-color: #3498db; }
+        .friend-btn { background-color: #27ae60; }
+        .friend-btn:hover { background-color: #2ecc71; }
+
+        #digital-clock {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            font-family: 'Digital-7 Mono', sans-serif;
+            font-size: 2.2rem;
+            color: #00ff00; 
+            background: #000000; 
+            padding: 8px 18px; 
+            border-radius: 6px;
+            border: 3px solid #333; 
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3), inset 0 0 8px rgba(0, 0, 0, 1);
+            display: none; 
+            z-index: 900;
+            letter-spacing: 1px;
+        }
+
+        #flashlight-btn, #party-btn {
+            display: none; 
+            position: fixed;
+            cursor: pointer;
+            z-index: 1100;
+            user-select: none;
+            transition: transform 0.3s ease, opacity 0.5s;
+        }
+
+        #flashlight-btn { top: 25px; right: 25px; font-size: 45px; }
+        #party-btn { bottom: 25px; right: 25px; font-size: 55px; }
+
         .header {
             position: absolute;
-            top: 40px; 
+            top: 100px; 
             width: 100%;
             text-align: center;
         }
 
-        /* Napis główny - fioletowy */
         h1 {
             font-size: 4.5rem;
             color: #a82eff; 
             margin-bottom: 5px;
-            letter-spacing: 2px;
             cursor: pointer;
             text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
-            transition: transform 0.2s;
+            transition: transform 0.3s ease;
         }
 
-        h1:hover {
-            transform: scale(1.03);
-        }
-
-        /* Mniejszy napis - teraz TEŻ fioletowy */
-        p.subtitle {
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #a82eff; 
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Przyciski na środku */
         .buttons-container {
             display: flex;
             gap: 20px;
-            flex-wrap: wrap;
             justify-content: center;
+            margin-top: 120px;
         }
 
         .btn {
-            display: inline-block;
             padding: 15px 35px;
             font-size: 1.1rem;
             font-weight: bold;
-            color: black; /* CZARNY NAPIS NA PRZYCISKACH */
+            color: black; 
             text-decoration: none;
             background-color: #a82eff; 
             border-radius: 12px;
-            
-            /* Płaski wygląd z fioletową poświatą/cieniem */
-            box-shadow: 0 8px 20px rgba(168, 46, 255, 0.4);
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
-        /* Animacja podnoszenia */
-        .btn:hover {
-            transform: translateY(-7px);
-            background-color: #bc61ff;
-            box-shadow: 0 15px 30px rgba(168, 46, 255, 0.6);
-        }
-
-        .btn:active {
-            transform: translateY(0px);
-        }
-
-        /* BIAŁY EKRAN (Sekret) */
         .overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: white;
             z-index: 9999;
             display: flex;
@@ -113,61 +199,203 @@
             transition: opacity 0.5s ease;
         }
 
-        .overlay.active {
-            opacity: 1;
-            pointer-events: all;
+        .overlay.active { opacity: 1; pointer-events: all; }
+
+        @keyframes jumpEffect {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-40px); }
         }
 
-        .overlay h2 {
-            color: black;
-            font-size: 4rem;
-            font-family: 'Arial Black', sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
+        .do-jump { animation: jumpEffect 0.4s ease-out; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()" ontouchstart="initAudio()">
 
-    <div id="white-screen" class="overlay">
-        <h2 id="secret-text"></h2>
+    <div id="white-screen" class="overlay"><h2 id="secret-text" style="color: black; font-size: 4rem; text-align: center; padding: 20px;"></h2></div>
+
+    <div id="digital-clock">00:00</div>
+    <div id="flashlight-btn">🔦</div>
+    <div id="party-btn">🎉</div>
+
+    <div class="secret-settings-container">
+        <div class="gear-wrapper" id="gear-btn">
+            <span class="gear-icon">⚙️</span>
+            <span class="settings-text">Settings</span>
+        </div>
+        <div class="settings-menu" id="settings-menu">
+            <button id="enable-fun-btn" class="enable-fun-btn">✨ Enable Fun</button>
+            <button id="clock-toggle-btn" class="clock-toggle-btn">🕒 Toggle Clock</button>
+            <button id="flip-screen-btn" class="super-secret-btn">🔄 Super Secret Setting</button>
+            <a href="https://mkubica2137-byte.github.io/dadadadada/" target="_blank" class="friend-btn">🤝 Visit My Friend Website</a>
+        </div>
     </div>
 
     <div class="header">
         <h1 id="title-btn">Sli4mePL's Site!</h1>
-        <p class="subtitle">Welcome To My Site Thx For Visiting!</p>
+        <p class="subtitle" style="color: #a82eff; font-weight: 500;">Welcome To My Site Thx For Visiting!</p>
     </div>
 
     <div class="buttons-container">
         <a href="about.html" class="btn">About me</a>
         <a href="games.html" class="btn">Games</a>
-        <a href="info.html" class="btn">Info</a>
         <a href="updates.html" class="btn">Updates</a>
         <a href="setup.html" class="btn">My setup</a>
     </div>
 
     <script>
-        let clickCount = 0;
-        const titleButton = document.getElementById('title-btn');
-        const overlay = document.getElementById('white-screen');
-        const secretText = document.getElementById('secret-text');
+        let titleClickCount = 0;
+        let funEnabled = false;
+        let clockVisible = false;
+        let audioInitialized = false;
 
-        titleButton.addEventListener('click', function() {
-            clickCount++;
+        // --- KONFIGURACJA AUDIO ---
+        const DAY_URL = 'https://www.dropbox.com/scl/fi/p3xk3tl9xdjwy4b65lxpu/Short-10-Min-Nature-Sounds-Meditation-Relaxing-Forest-Morning-Birds-Chirping-Calm-Sleeping-Sound.mp4?rlkey=30uoz8omf52c9av7r7lzaqqll&st=cw5hd5r8&dl=1'; 
+        const NIGHT_URL = 'https://www.dropbox.com/scl/fi/a4y9y7ggbq8z6mgcj66rj/Night-Sounds-10-Minutes.mp4?rlkey=ngu1qnpwyorpqawufmos0q0r2&st=z0gc9vkv&dl=1'; 
 
-            if (clickCount === 1) {
-                secretText.innerText = "Dont Click Me :[";
+        const dayAudio = new Audio(DAY_URL);
+        const nightAudio = new Audio(NIGHT_URL);
+
+        dayAudio.loop = true;
+        nightAudio.loop = true;
+        dayAudio.volume = 0.5;
+        nightAudio.volume = 0.5;
+
+        function initAudio() {
+            if (audioInitialized) return;
+            audioInitialized = true;
+            checkTimeAndPlay();
+        }
+
+        function checkTimeAndPlay() {
+            if (!audioInitialized) return;
+            const now = new Date();
+            const hour = now.getHours();
+            const isNight = (hour >= 20 || hour < 6);
+
+            if (isNight) {
+                if (nightAudio.paused) {
+                    dayAudio.pause();
+                    nightAudio.play().catch(() => {});
+                }
             } else {
-                secretText.innerText = "Why Did You Click Me >:c";
+                if (dayAudio.paused) {
+                    nightAudio.pause();
+                    dayAudio.play().catch(() => {});
+                }
             }
+        }
 
-            overlay.classList.add('active');
+        function updateClock() {
+            const clockEl = document.getElementById('digital-clock');
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = now.getSeconds() % 2 === 0 ? ':' : ' ';
+            clockEl.innerText = `${h}${s}${m}`;
+            
+            if (now.getHours() >= 20 || now.getHours() < 6) {
+                document.body.classList.add('night-mode');
+            } else {
+                document.body.classList.remove('night-mode');
+            }
+            checkTimeAndPlay(); 
+        }
 
-            setTimeout(function() {
-                overlay.classList.remove('active');
-            }, 2500);
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const gearBtn = document.getElementById('gear-btn');
+        const settingsMenu = document.getElementById('settings-menu');
+        gearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('visible');
+        });
+
+        document.getElementById('clock-toggle-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            clockVisible = !clockVisible;
+            document.getElementById('digital-clock').style.display = clockVisible ? 'block' : 'none';
+        });
+
+        const enableFunBtn = document.getElementById('enable-fun-btn');
+        enableFunBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            funEnabled = !funEnabled;
+            initAudio(); 
+            if (funEnabled) {
+                document.getElementById('flashlight-btn').style.display = 'block';
+                document.getElementById('party-btn').style.display = 'block';
+                enableFunBtn.innerText = "✅ Fun Enabled!";
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                document.getElementById('flashlight-btn').style.display = 'none';
+                document.getElementById('party-btn').style.display = 'none';
+                enableFunBtn.innerText = "✨ Enable Fun";
+            }
+        });
+
+        document.getElementById('flashlight-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.body.classList.toggle('bright');
+            this.classList.add('do-jump');
+            setTimeout(() => this.classList.remove('do-jump'), 400);
+        });
+
+        // Przywrócona funkcja Piniaty
+        const partyBtn = document.getElementById('party-btn');
+        partyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { x: 0.9, y: 0.9 }
+            });
+            partyBtn.classList.add('do-jump');
+            setTimeout(() => {
+                partyBtn.style.opacity = '0';
+                setTimeout(() => partyBtn.style.display = 'none', 500);
+            }, 1500);
+        });
+
+        // === Przywrócona pełna sekwencja Tytułu ===
+        document.getElementById('title-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!funEnabled) return;
+            
+            titleClickCount++;
+            const overlay = document.getElementById('white-screen');
+            const label = document.getElementById('secret-text');
+
+            if (titleClickCount === 1) {
+                label.innerText = "Don't Click Me :[";
+                overlay.classList.add('active');
+                setTimeout(() => overlay.classList.remove('active'), 1500);
+            } 
+            else if (titleClickCount === 2) {
+                label.innerText = "Why Did You Click Me >:c";
+                overlay.classList.add('active');
+                setTimeout(() => overlay.classList.remove('active'), 1500);
+            }
+            else if (titleClickCount === 3) {
+                label.innerText = "I Said Dont Click >:[";
+                overlay.classList.add('active');
+                setTimeout(() => overlay.classList.remove('active'), 1500);
+            }
+            else {
+                label.innerText = "... i said something.";
+                overlay.classList.add('active');
+                // Udawane "wyłączenie" strony po chwili
+                setTimeout(() => {
+                    document.body.innerHTML = "";
+                    document.body.style.backgroundColor = "black";
+                }, 2500);
+            }
+        });
+
+        document.getElementById('flip-screen-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.body.classList.toggle('upside-down');
         });
     </script>
-
 </body>
 </html>
