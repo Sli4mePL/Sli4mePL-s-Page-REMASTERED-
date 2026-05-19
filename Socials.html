@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socials | Sli4mePL</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* TŁO: Podmień adres URL na własny plik */
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('img/tlo1.png') no-repeat center center/cover;
+            background-attachment: fixed;
+            color: white;
+            text-align: center;
+        }
+
+        /* Wspólny styl dla fioletowych elementów */
+        .purple-accent {
+            background-color: #a832f0;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 4rem;
+            color: #a832f0;
+            margin: 0 0 0.5rem 0;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .sub-text {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #a832f0;
+            font-weight: bold;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn {
+            background-color: #a832f0;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn purple-accent">Back</a>
+
+    <div class="main-container">
+        <h1>Socials</h1>
+        <div class="sub-text">My Accounts</div>
+        
+        <div class="buttons">
+            <a href="https://discord.gg/nnvubJxsK5" class="btn" target="_blank">Discord</a>
+            <a href="https://www.youtube.com/@Sli4mePL" class="btn" target="_blank">YouTube</a>
+            <a href="https://steamcommunity.com/id/Sli4mePL/" class="btn" target="_blank">Steam</a>
+        </div>
+    </div>
+
+</body>
+</html>
