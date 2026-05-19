@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sli4mePL's Site!</title>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Digital Font -->
+    <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-image: url('Img/tlo1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: rgba(0, 0, 0, 0.4); 
+            background-blend-mode: overlay;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: transform 1s ease-in-out, filter 0.3s ease, background-color 2s ease;
+            overflow-x: hidden; 
+            cursor: pointer;
+        }
+
+        body.night-mode {
+            background-color: rgba(5, 5, 20, 0.85); 
+        }
+
+        body.upside-down {
+            transform: rotate(180deg);
+        }
+
+        /* --- FLASHLIGHT STYLE --- */
+        body.bright {
+            filter: brightness(1.2);
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            background-blend-mode: lighten;
+        }
+
+        body.bright h1, 
+        body.bright .subtitle {
+            color: white !important;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.9) !important;
+        }
+
+        body.bright .btn {
+            background-color: white !important;
+            color: black !important;
+            border: 2px solid white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .secret-settings-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .gear-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .gear-icon {
+            font-size: 2rem;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+            display: inline-block;
+        }
+
+        .settings-text {
+            font-weight: bold;
+            color: #a82eff;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(168, 46, 255, 0.5);
+        }
+
+        .gear-wrapper:hover .gear-icon { transform: rotate(180deg) translateY(-6px); }
+        .gear-wrapper:hover .settings-text { opacity: 1; transform: translateX(0); }
+
+        .settings-menu {
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #a82eff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 240px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .settings-menu.visible { display: flex; }
+
+        .super-secret-btn, .enable-fun-btn, .clock-toggle-btn, .friend-btn, .pendrive-btn-in-menu, .menu-section-btn {
+            padding: 12px 15px;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .super-secret-btn:hover, .enable-fun-btn:hover, .clock-toggle-btn:hover, 
+        .friend-btn:hover, .pendrive-btn-in-menu:hover, .menu-section-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+
+        .enable-fun-btn { background-color: #a82eff; }
+        .super-secret-btn { background-color: #ff2e2e; }
+        .clock-toggle-btn { background-color: #3498db; }
+        .friend-btn { background-color: #27ae60; }
+        .social-btn { background-color: #0084ff; }
+        .updates-btn { background-color: #9b59b6; }
+        .send-msg-btn { background-color: #e67e22; }
+        .admin-panel-btn { background-color: #c0392b; display: none; }
+        
+        .friend-options-div {
+            display: none; flex-direction: column; gap: 5px; margin-bottom: 8px;
+            padding: 5px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;
+        }
+        .friend-options-div.visible { display: flex; flex-direction: row; gap: 10px; }
+        
+        .friend-option-link {
+            flex: 1; padding: 10px; color: white; text-align: center; border-radius: 8px;
+            text-decoration: none; font-weight: bold; transition: all 0.2s; background-color: #2ecc71;
+        }
+        .friend-option-link:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+        .pendrive-btn-in-menu { background-color: #f39c12; color: black; display: none; border: 2px solid #000; }
+        .pendrive-btn-in-menu:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .bat-download-btn {
+            background-color: #ffd700; color: #000000; font-size: 0.85rem; font-weight: bold;
+            padding: 10px 15px; border-radius: 8px; border: 2px solid #ffcc00;
+            transition: all 0.25s; margin-top: 5px; cursor: pointer; width: 100%;
+            text-align: left; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
+        }
+        .bat-download-btn:hover { 
+            background-color: #ffff00; transform: translateY(-3px);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.8); border-color: #ffff33;
+        }
+
+        #digital-clock {
+            position: fixed; bottom: 15px; left: 15px; font-family: 'Digital-7 Mono', sans-serif;
+            font-size: 2.2rem; color: #00ff00; background: #000000; padding: 8px 18px; 
+            border-radius: 6px; border: 3px solid #333; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3), inset 0 0 8px rgba(0, 0, 0, 1);
+            display: none; z-index: 900; letter-spacing: 1px;
+        }
+
+        #flashlight-btn, #party-btn {
+            display: none; position: fixed; cursor: pointer; z-index: 1100; user-select: none;
+            transition: transform 0.3s, opacity 0.5s;
+        }
+        #flashlight-btn { top: 25px; right: 25px; font-size: 45px; }
+        #party-btn { bottom: 25px; right: 25px; font-size: 55px; }
+        #flashlight-btn:hover, #party-btn:hover { transform: scale(1.15) translateY(-8px); }
+
+        /* Unified Custom Overlay style */
+        .custom-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); display: none; justify-content: center;
+            align-items: center; flex-direction: column; z-index: 2000;
+        }
+
+        .custom-overlay input[type="password"], 
+        .custom-overlay input[type="text"], 
+        .custom-overlay textarea {
+            background: #111; border: 2px solid #a82eff; color: #fff;
+            padding: 12px; border-radius: 8px; font-size: 1.1rem; text-align: left;
+            margin-bottom: 12px; outline: none; width: 100%;
+        }
+        .custom-overlay input[type="password"] { text-align: center; color: #a82eff; }
+        .custom-overlay textarea { font-size: 1.1rem; min-height: 100px; resize: none; }
+        
+        /* Fioletowe podświetlenie dla standardowych pól tekstowych */
+        .custom-overlay input:focus, .custom-overlay textarea:focus {
+            border-color: #a82eff;
+            box-shadow: 0 0 12px rgba(168, 46, 255, 0.8);
+        }
+
+        /* CZERWONE obramowanie i poświata specjalnie dla Admin Password Input */
+        #admin-password-overlay input#admin-password-input {
+            border: 2px solid #c0392b;
+            color: #c0392b;
+        }
+        #admin-password-overlay input#admin-password-input:focus {
+            border-color: #ff3333;
+            box-shadow: 0 0 15px rgba(192, 57, 43, 0.9);
+        }
+        
+        .hint-text { color: #ffaa00; margin-top: 10px; font-size: 1rem; opacity: 0; transition: opacity 0.3s; font-style: italic; }
+
+        /* Klasyczne fioletowe boxy modalne */
+        .purple-modal-box {
+            background-color: #111; border: 3px solid #a82eff; color: white;
+            padding: 30px; width: 90%; max-width: 500px; text-align: left;
+            position: relative; box-shadow: 0 10px 30px rgba(168, 46, 255, 0.4);
+            border-radius: 12px;
+        }
+        
+        /* Klasa dla smukłego modal boxa (troszkę szczupły) */
+        .purple-modal-box.slender-box {
+            max-width: 385px;
+            padding: 20px 25px;
+        }
+        
+        .purple-modal-box h2 { color: #a82eff; margin-bottom: 15px; text-transform: uppercase; font-size: 1.8rem; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;}
+        .purple-modal-box p { font-size: 1.1rem; line-height: 1.5; font-weight: 500; }
+
+        /* Message Layout w modalach */
+        .msg-container-box {
+            background-color: #111; border: 3px solid #a82eff; color: white;
+            padding: 25px; width: 95%; max-width: 550px; text-align: left;
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(168, 46, 255, 0.4);
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+
+        /* Admin Panel Popup & Message Lists */
+        .admin-box {
+            background-color: #111; border: 3px solid #a82eff; color: white;
+            padding: 25px; width: 95%; max-width: 750px; text-align: left;
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(168, 46, 255, 0.4);
+            max-height: 85vh; display: flex; flex-direction: column;
+        }
+        .admin-box h2 { color: #a82eff; margin-bottom: 15px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;}
+        
+        .message-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; }
+        .message-item { 
+            background: #1c1c1c; padding: 15px; margin-bottom: 12px; border-radius: 8px; 
+            border-left: 5px solid #a82eff; position: relative;
+        }
+        .message-item .msg-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: #aaa; margin-bottom: 5px; }
+        .message-item .msg-nick { font-weight: bold; color: #ffd700; font-size: 1rem; }
+        .message-item .msg-subject { font-style: italic; color: #0084ff; font-weight: 600; margin-bottom: 8px; }
+        .message-item .msg-text { font-size: 1.05rem; line-height: 1.4; color: #fff; white-space: pre-wrap; }
+        
+        /* Odpowiedzi */
+        .replies-container {
+            margin-top: 10px; padding-left: 15px; border-left: 2px dashed #e67e22; background: rgba(230, 126, 34, 0.05);
+            border-radius: 4px; padding-top: 5px; padding-bottom: 5px;
+        }
+        .reply-item { font-size: 0.95rem; margin-bottom: 5px; color: #ddd; }
+        .reply-item .reply-header { font-size: 0.75rem; color: #e67e22; font-weight: bold; }
+        .reply-item .reply-text { margin-left: 5px; }
+
+        .header { position: absolute; top: 100px; width: 100%; text-align: center; }
+        h1 { font-size: 4.5rem; color: #a82eff; margin-bottom: 5px; cursor: pointer; text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); transition: transform 0.3s ease, color 0.3s ease; }
+
+        .buttons-container { display: flex; gap: 20px; justify-content: center; margin-top: 120px; }
+        .btn {
+            padding: 15px 35px; font-size: 1.1rem; font-weight: bold; color: black; 
+            text-decoration: none; background-color: #a82eff; border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); text-align: center;
+        }
+        .btn:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(168, 46, 255, 0.5); }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: white; z-index: 9999; display: flex; justify-content: center;
+            align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+        }
+        .overlay.active { opacity: 1; pointer-events: all; }
+
+        @keyframes jumpEffect { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
+        .do-jump { animation: jumpEffect 0.4s ease-out; }
+
+        /* Ryzen Demo */
+        #ryzen-demo-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; cursor: default; perspective: 1200px; }
+        #ryzen-floor { position: absolute; bottom: 0; width: 200%; height: 100%; background: radial-gradient(circle at center, #1a1a1a 0%, #000 70%); transform: rotateX(80deg) translateY(200px); z-index: 1; }
+        #ryzen-logo-wrapper { position: relative; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center; z-index: 10; }
+        #ryzen-logo-3d { width: 250px; height: 250px; background: linear-gradient(135deg, #ff8c00 0%, #ff4500 100%); border: 8px solid #ffaa00; display: flex; justify-content: center; align-items: center; font-size: 50px; font-weight: 900; color: #fff; animation: rotateOnFloor 8s infinite linear; transform-style: preserve-3d; box-shadow: 0 50px 100px rgba(255, 140, 0, 0.4); }
+        @keyframes rotateOnFloor { 0% { transform: rotateX(75deg) rotateZ(0deg); } 100% { transform: rotateX(75deg) rotateZ(360deg); } }
+        #scene-light { position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,150,0,0.15) 50%, transparent 70%); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%) rotateX(75deg); pointer-events: none; z-index: 5; mix-blend-mode: screen; }
+        #rtx-bottom-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: #111; padding: 15px 30px; border-top: 2px solid #333; z-index: 11000; display: flex; align-items: center; }
+        #rtx-btn-demo { background: transparent; color: #00ff00; border: none; font-size: 1.4rem; font-weight: bold; cursor: pointer; padding: 5px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+        #exit-demo-btn { position: absolute; top: 20px; right: 20px; background: #cc0000; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; z-index: 12000; }
+        .broken-graphics #ryzen-logo-3d { animation: none; background: #222 !important; border: 4px dashed red !important; filter: blur(10px) contrast(2); transform: rotateX(85deg) scale(0.5); }
+        .broken-graphics #scene-light, .broken-graphics #ryzen-floor { display: none; }
+        .broken-graphics::after { content: "OVERLOADED CPU!!!"; position: absolute; color: red; font-family: monospace; font-size: 3rem; font-weight: bold; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; text-align: center; }
+    </style>
+</head>
+<body onclick="initAudio()" ontouchstart="initAudio()">
+
+    <audio id="settings-audio" loop preload="auto"></audio>
+    <audio id="ryzen-audio" loop preload="auto"></audio>
+
+    <!-- RYZEN DEMO OVERLAY -->
+    <div id="ryzen-demo-view">
+        <div id="ryzen-floor"></div>
+        <button id="exit-demo-btn">Close Demo</button>
+        <div id="ryzen-logo-wrapper">
+            <div id="scene-light"></div>
+            <div id="ryzen-logo-3d">RYZEN</div>
+        </div>
+        <div id="rtx-bottom-bar">
+            <button id="rtx-btn-demo">🟢 RTX ON</button>
+        </div>
+    </div>
+
+    <!-- Empty background with jump effect overlay -->
+    <div id="white-screen" class="overlay">
+        <h2 id="secret-text" style="color: black; font-size: 4rem; text-align: center; padding: 20px;"></h2>
+    </div>
+
+    <!-- Modals & Overlays -->
+    
+    <!-- 1. Password Prompt for Fun -->
+    <div id="password-overlay" class="custom-overlay">
+        <div class="purple-modal-box" style="text-align: center;">
+            <h2 style="margin-bottom: 20px;">Enter Password</h2>
+            <input type="password" id="password-input" placeholder="****">
+            <div id="hint-text" class="hint-text">Hint: The Current Year</div>
+            <div style="margin-top: 20px;">
+                <button onclick="checkSecretPassword()" class="enable-fun-btn" style="display:inline-block; width: 120px; text-align: center;">OK</button>
+                <button onclick="closePasswordPrompt()" class="super-secret-btn" style="display:inline-block; width: 120px; text-align: center;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Password Prompt for Download -->
+    <div id="download-password-overlay" class="custom-overlay">
+        <div class="purple-modal-box" style="text-align: center;">
+            <h2 style="margin-bottom: 20px;">Enter Password</h2>
+            <input type="password" id="download-password-input" placeholder="****">
+            <div id="download-hint-text" class="hint-text">Wrong Password!</div>
+            <div style="margin-top: 20px;">
+                <button onclick="checkDownloadPassword()" class="enable-fun-btn" style="display:inline-block; width: 120px; text-align: center;">OK</button>
+                <button onclick="closeDownloadPasswordPrompt()" class="super-secret-btn" style="display:inline-block; width: 120px; text-align: center;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Password Prompt for Admin Panel -->
+    <div id="admin-password-overlay" class="custom-overlay">
+        <div class="purple-modal-box" style="text-align: center; border-color: #c0392b;">
+            <h2 style="margin-bottom: 20px; color: #c0392b;">Admin Auth</h2>
+            <!-- Pole z czerwonymi stylami i placeholderem -->
+            <input type="password" id="admin-password-input" placeholder="Access Code">
+            <div id="admin-hint-text" class="hint-text">Access Denied!</div>
+            <div style="margin-top: 20px;">
+                <button onclick="checkAdminPassword()" class="enable-fun-btn" style="display:inline-block; width: 120px; text-align: center; background-color: #c0392b;">Panel</button>
+                <button onclick="closeAdminPasswordPrompt()" class="super-secret-btn" style="display:inline-block; width: 120px; text-align: center;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Updates & Changelog Classic Purple Modal - SLENDER (Troszkę szczupły) -->
+    <div id="updates-popup" class="custom-overlay">
+        <div class="purple-modal-box slender-box">
+            <h2>Updates & Changelog</h2>
+            <p style="font-size: 1rem;"><strong>v1.5 (Latest!):</strong><br>
+            • Saved messages and admin replies permanently using cloud storage.<br>
+            • Translated the site entirely to English.<br>
+            • Admin Panel trigger updated to exactly 5 clicks.<br>
+            • Cleaned up public messages overview.<br>
+            • Restored original dark purple modal aesthetics.</p>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="document.getElementById('updates-popup').style.display='none'" class="super-secret-btn" style="display:inline-block; width: 120px;">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Send Message Overlay (Form Only) -->
+    <div id="send-msg-overlay" class="custom-overlay">
+        <div class="msg-container-box">
+            <h2 id="send-msg-title" style="margin-bottom: 15px; color: #e67e22; text-align: center;">✉️ Message Sli4mePL</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 5px; width: 100%;">
+                <input type="text" id="send-msg-nick" placeholder="Your Nick (e.g. Friend)" style="margin-bottom: 8px;">
+                <input type="text" id="send-msg-subject" placeholder="Subject (What do you want to talk about?)" style="margin-bottom: 8px;">
+            </div>
+            <textarea id="send-msg-textarea" placeholder="Type your message content here..." style="margin-bottom: 12px;"></textarea>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="submitMessage()" class="enable-fun-btn" style="background-color: #e67e22; flex: 1; text-align: center; padding: 12px;">Send Message</button>
+                <button onclick="closeSendMsg()" class="super-secret-btn" style="flex: 0.5; text-align: center; padding: 12px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Admin Reply Modal (Original Dark Theme) -->
+    <div id="admin-reply-overlay" class="custom-overlay" style="z-index: 2500;">
+        <div class="purple-modal-box">
+            <h2>Reply to Message</h2>
+            <p id="reply-target-info" style="font-size: 0.9rem; color: #ffd700; margin-bottom: 10px;"></p>
+            <textarea id="admin-reply-textarea" placeholder="Type your response as Sli4mePL..." style="background: #111; border: 2px solid #a82eff; color: white; width: 100%; min-height: 100px; padding: 10px; border-radius: 8px; outline: none;"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="submitAdminReply()" class="enable-fun-btn" style="flex: 1; text-align: center; background-color: #a82eff;">Reply</button>
+                <button onclick="document.getElementById('admin-reply-overlay').style.display='none'" class="super-secret-btn" style="flex: 1; text-align: center;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Admin Panel View (Original Dark Theme) -->
+    <div id="admin-panel-overlay" class="custom-overlay">
+        <div class="admin-box">
+            <h2>🛠️ Admin Inbox (Sli4mePL)</h2>
+            <div style="overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 5px;">
+                <ul id="admin-msg-list" class="message-list">
+                    <!-- Loaded dynamically via Firestore -->
+                </ul>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="document.getElementById('admin-panel-overlay').style.display='none'" class="super-secret-btn" style="display:inline-block; width: 180px;">Close Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Elements -->
+    <div id="digital-clock">00:00</div>
+    <div id="flashlight-btn">🔦</div>
+    <div id="party-btn">🎉</div>
+
+    <div class="secret-settings-container">
+        <div class="gear-wrapper" id="gear-btn">
+            <span class="gear-icon">⚙️</span>
+            <span class="settings-text">Settings</span>
+        </div>
+        <div class="settings-menu" id="settings-menu">
+            <!-- Message send button (Normal view) -->
+            <button id="open-msg-btn" class="menu-section-btn send-msg-btn" onclick="openSendMsg()">✉️ Send A Message To Sli4mePL</button>
+
+            <!-- Admin Panel - Hidden by default -->
+            <button id="admin-panel-menu-btn" class="menu-section-btn admin-panel-btn" onclick="openAdminPasswordPrompt()">🛠️ Admin Panel</button>
+
+            <button id="enable-fun-btn" class="enable-fun-btn">✨ Enable Fun</button>
+            
+            <button id="pendrive-btn-menu" class="pendrive-btn-in-menu">💾 Put PenDrive</button>
+
+            <button id="clock-toggle-btn" class="clock-toggle-btn">🕒 Toggle Clock</button>
+            
+            <!-- Separator below clock, shows in Fun mode to separate the Super Secret Setting button -->
+            <hr id="fun-hr" style="border: 0.5px solid #444; margin: 5px 0; display: none;">
+
+            <!-- Super Secret Setting - Hidden by default (shows only in Fun mode) -->
+            <button id="flip-screen-btn" class="super-secret-btn" style="display: none;">🔄 Super Secret Setting</button>
+            
+            <hr style="border: 0.5px solid #444; margin: 5px 0;">
+
+            <a href="socials.html" id="socials-btn" class="menu-section-btn social-btn">🌐 My Socials</a>
+
+            <button onclick="document.getElementById('updates-popup').style.display='flex'" id="updates-menu-btn" class="menu-section-btn updates-btn">🚀 Updates & Changelog</button>
+            
+            <hr style="border: 0.5px solid #444; margin: 5px 0;">
+            
+            <button id="visit-friend-btn" class="friend-btn">🤝 Visit Friend Site</button>
+            <div id="friend-options" class="friend-options-div">
+                <a href="https://mkubica2137-byte.github.io/dadadadada/" target="_blank" class="friend-option-link">1️⃣</a>
+                <a href="https://rodsullivanofficial.github.io/rodatip21/index.html" target="_blank" class="friend-option-link">2️⃣</a>
+            </div>
+            
+            <button id="bat-download-btn" class="bat-download-btn">🔒 Download Script (.bat)</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1 id="title-btn">Sli4mePL's Site!</h1>
+        <p class="subtitle" style="color: #a82eff; font-weight: 500;">Welcome to my site! Thanks for visiting!</p>
+    </div>
+
+    <div class="buttons-container">
+        <a href="about.html" class="btn">About me</a>
+        <a href="games.html" class="btn">Games</a>
+        <a href="updates.html" class="btn">Updates</a>
+        <a href="setup.html" class="btn">My setup</a>
+    </div>
+
+    <!-- Firebase App and Services script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE INITIALIZATION ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUser = null;
+        let messagesArray = [];
+
+        // Inicjalizacja wiadomości z LocalStorage na wypadek braku bazy online
+        const loadMessagesFromLocalStorage = () => {
+            const stored = localStorage.getItem("sli4me_messages");
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    return [];
+                }
+            }
+            return [];
+        };
+
+        const saveMessagesToLocalStorage = (msgs) => {
+            localStorage.setItem("sli4me_messages", JSON.stringify(msgs));
+        };
+
+        // Domyślne załadowanie z pamięci lokalnej na start
+        messagesArray = loadMessagesFromLocalStorage();
+
+        // Auth initialization
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                subscribeToMessages();
+            }
+        });
+
+        // Realtime Firestore Subscription with error handling & LocalStorage synchronization
+        function subscribeToMessages() {
+            if (!currentUser) return;
+            const messagesCol = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+            
+            onSnapshot(messagesCol, (snapshot) => {
+                const tempArray = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    tempArray.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                // Zapisujemy najnowszy stan pobrany z bazy danych
+                messagesArray = tempArray;
+
+                // Sort in memory by timestamp ascending
+                messagesArray.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                // Synchronizuj z LocalStorage, aby były dostępne offline
+                saveMessagesToLocalStorage(messagesArray);
+
+                // Auto-refresh Admin Inbox if currently open
+                if (document.getElementById('admin-panel-overlay').style.display === 'flex') {
+                    openAdminPanel();
+                }
+            }, (error) => {
+                console.error("Firestore read error:", error);
+                // W przypadku błędu bazy pracujemy na LocalStorage
+                messagesArray = loadMessagesFromLocalStorage();
+            });
+        }
+
+        // --- MULTIMEDIA LINKS ---
+        const SETTINGS_AUDIO_URL = 'https://www.dropbox.com/scl/fi/qfbp9pqhwkqk3ew23swba/Chemia-nowej-ery-muzyka-10h.mp3?rlkey=z6kydcpatrnhzynup0ha75fsn&st=ol7cp0il&dl=0';
+        const RYZEN_AUDIO_URL = 'https://www.dropbox.com/scl/fi/oec4nj14yvil968elpni2/chip.mp3?rlkey=6l8f8osrgzy22320ojfyqhdml&st=wugh6vgp&dl=0';
+
+        let titleClickCount = 0;
+        let failedPasswordAttempts = 0;
+        let funEnabled = false;
+        let clockVisible = false;
+        let audioInitialized = false;
+        
+        // Admin and Reply State Variables
+        let enableFunClickCount = 0; 
+        let replyTargetId = null;
+
+        const DAY_URL = 'https://www.dropbox.com/scl/fi/p3xk3tl9xdjwy4b65lxpu/Short-10-Min-Nature-Sounds-Meditation-Relaxing-Forest-Morning-Birds-Chirping-Calm-Sleeping-Sound.mp4?rlkey=30uoz8omf52c9av7r7lzaqqll&st=cw5hd5r8&dl=1'; 
+        const NIGHT_URL = 'https://www.dropbox.com/scl/fi/a4y9y7ggbq8z6mgcj66rj/Night-Sounds-10-Minutes.mp4?rlkey=ngu1qnpwyorpqawufmos0q0r2&st=z0gc9vkv&dl=1'; 
+
+        const dayAudio = new Audio(DAY_URL);
+        const nightAudio = new Audio(NIGHT_URL);
+        
+        const settingsAudio = document.getElementById('settings-audio');
+        settingsAudio.src = SETTINGS_AUDIO_URL;
+        
+        const ryzenAudio = document.getElementById('ryzen-audio');
+        ryzenAudio.src = RYZEN_AUDIO_URL;
+
+        dayAudio.loop = true; nightAudio.loop = true;
+        dayAudio.volume = 0.5; nightAudio.volume = 0.5;
+
+        function initAudio() {
+            if (audioInitialized) return;
+            audioInitialized = true;
+            checkTimeAndPlay();
+        }
+
+        function checkTimeAndPlay() {
+            if (!audioInitialized) return;
+            const now = new Date();
+            const hour = now.getHours();
+            const isNight = (hour >= 20 || hour < 6);
+
+            if (isNight) {
+                if (nightAudio.paused) { dayAudio.pause(); nightAudio.play().catch(() => {}); }
+            } else {
+                if (dayAudio.paused) { nightAudio.pause(); dayAudio.play().catch(() => {}); }
+            }
+        }
+
+        function updateClock() {
+            const clockEl = document.getElementById('digital-clock');
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = now.getSeconds() % 2 === 0 ? ':' : ' ';
+            clockEl.innerText = `${h}${s}${m}`;
+            
+            if (!document.body.classList.contains('bright')) {
+                if (now.getHours() >= 20 || now.getHours() < 6) { document.body.classList.add('night-mode'); } 
+                else { document.body.classList.remove('night-mode'); }
+            }
+            checkTimeAndPlay(); 
+        }
+
+        setInterval(updateClock, 1000); updateClock();
+
+        const gearBtn = document.getElementById('gear-btn');
+        const settingsMenu = document.getElementById('settings-menu');
+        gearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('visible');
+            if (settingsMenu.classList.contains('visible')) { settingsAudio.play().catch(e => console.log("Audio play blocked")); } 
+            else { settingsAudio.pause(); settingsAudio.currentTime = 0; }
+        });
+
+        document.getElementById('visit-friend-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('friend-options').classList.toggle('visible');
+        });
+
+        document.getElementById('clock-toggle-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            clockVisible = !clockVisible;
+            document.getElementById('digital-clock').style.display = clockVisible ? 'block' : 'none';
+        });
+
+        // --- FUN ENABLE & ADMIN LOGIC ---
+        const enableFunBtn = document.getElementById('enable-fun-btn');
+        enableFunBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Registered clicks count - Now exactly 5 clicks for Admin Panel!
+            enableFunClickCount++;
+            if (enableFunClickCount >= 5) {
+                document.getElementById('admin-panel-menu-btn').style.display = 'block';
+            }
+
+            if (funEnabled) { disableFun(); } 
+            else {
+                document.getElementById('password-overlay').style.display = 'flex';
+                document.getElementById('password-input').focus();
+            }
+        });
+
+        function checkSecretPassword() {
+            const pass = document.getElementById('password-input').value;
+            if (pass === "2026") {
+                failedPasswordAttempts = 0;
+                document.getElementById('hint-text').style.opacity = "0";
+                activateFun();
+                closePasswordPrompt();
+            } else {
+                failedPasswordAttempts++;
+                document.getElementById('password-input').value = "";
+                document.getElementById('password-input').style.borderColor = "red";
+                if (failedPasswordAttempts >= 5) document.getElementById('hint-text').style.opacity = "1";
+                setTimeout(() => { document.getElementById('password-input').style.borderColor = "#a82eff"; }, 500);
+            }
+        }
+
+        function closePasswordPrompt() {
+            document.getElementById('password-overlay').style.display = 'none';
+            document.getElementById('password-input').value = "";
+        }
+
+        function activateFun() {
+            funEnabled = true;
+            initAudio(); 
+            document.getElementById('flashlight-btn').style.display = 'block';
+            document.getElementById('party-btn').style.display = 'block';
+            document.getElementById('pendrive-btn-menu').style.display = 'block';
+            
+            document.getElementById('flip-screen-btn').style.display = 'block';
+            document.getElementById('fun-hr').style.display = 'block';
+            
+            enableFunBtn.innerText = "✅ Fun Enabled!";
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function disableFun() {
+            funEnabled = false;
+            document.getElementById('flashlight-btn').style.display = 'none';
+            document.getElementById('party-btn').style.display = 'none';
+            document.getElementById('pendrive-btn-menu').style.display = 'none';
+            
+            document.getElementById('flip-screen-btn').style.display = 'none';
+            document.getElementById('fun-hr').style.display = 'none';
+            document.body.classList.remove('upside-down');
+            
+            enableFunBtn.innerText = "✨ Enable Fun";
+            document.body.classList.remove('bright');
+            updateClock();
+        }
+
+        // --- ADMIN PANEL JS ---
+        function openAdminPasswordPrompt() {
+            document.getElementById('admin-password-overlay').style.display = 'flex';
+            document.getElementById('admin-password-input').focus();
+        }
+
+        function closeAdminPasswordPrompt() {
+            document.getElementById('admin-password-overlay').style.display = 'none';
+            document.getElementById('admin-password-input').value = "";
+            document.getElementById('admin-hint-text').style.opacity = "0";
+        }
+
+        function checkAdminPassword() {
+            const pass = document.getElementById('admin-password-input').value;
+            if (pass === "1282Sli4mePL") {
+                document.getElementById('admin-hint-text').style.opacity = "0";
+                closeAdminPasswordPrompt();
+                openAdminPanel();
+            } else {
+                document.getElementById('admin-password-input').value = "";
+                document.getElementById('admin-password-input').style.borderColor = "#c0392b";
+                document.getElementById('admin-hint-text').style.opacity = "1";
+                setTimeout(() => { document.getElementById('admin-password-input').style.borderColor = "#c0392b"; }, 500);
+            }
+        }
+
+        // Render admin panel inbox list (Classic Dark style with Cloud support)
+        function openAdminPanel() {
+            const list = document.getElementById('admin-msg-list');
+            list.innerHTML = ""; 
+            
+            if (messagesArray.length === 0) {
+                list.innerHTML = `<li style="text-align:center; padding: 20px; color:#888;">No messages from users.</li>`;
+            } else {
+                messagesArray.forEach(msg => {
+                    const li = document.createElement('li');
+                    li.className = "message-item";
+                    
+                    let repliesHtml = "";
+                    if (msg.replies && msg.replies.length > 0) {
+                        repliesHtml = `<div class="replies-container">`;
+                        msg.replies.forEach(rep => {
+                            repliesHtml += `
+                                <div class="reply-item">
+                                    <span class="reply-header">↳ Sli4mePL [${rep.time}]:</span>
+                                    <span class="reply-text">${rep.text}</span>
+                                </div>`;
+                        });
+                        repliesHtml += `</div>`;
+                    }
+
+                    li.innerHTML = `
+                        <div class="msg-header">
+                            <span class="msg-nick">👤 ${msg.nick}</span>
+                            <span>⏱️ ${msg.time}</span>
+                        </div>
+                        <div class="msg-subject">Subject: ${msg.subject}</div>
+                        <div class="msg-text">${msg.text}</div>
+                        ${repliesHtml}
+                        <button id="reply-btn-${msg.id}" class="enable-fun-btn" style="margin-top: 10px; width: auto; display: inline-block; padding: 5px 15px; background-color: #a82eff; font-size: 0.85rem;">💬 Reply</button>
+                    `;
+                    list.appendChild(li);
+
+                    // Attach event listener inside ES module scope
+                    document.getElementById(`reply-btn-${msg.id}`).addEventListener('click', () => {
+                        initiateReply(msg.id, msg.nick);
+                    });
+                });
+            }
+
+            document.getElementById('admin-panel-overlay').style.display = 'flex';
+        }
+
+        // Initiate replying to selected message
+        function initiateReply(id, nick) {
+            replyTargetId = id;
+            document.getElementById('reply-target-info').innerText = `Replying to user: ${nick}`;
+            document.getElementById('admin-reply-textarea').value = "";
+            document.getElementById('admin-reply-overlay').style.display = 'flex';
+            document.getElementById('admin-reply-textarea').focus();
+        }
+
+        // Submit admin reply to Firestore / LocalStorage
+        async function submitAdminReply() {
+            const replyText = document.getElementById('admin-reply-textarea').value.trim();
+            if (replyText === "") return;
+
+            const targetMsg = messagesArray.find(m => m.id === replyTargetId);
+            if (targetMsg) {
+                const updatedReplies = [...(targetMsg.replies || [])];
+                updatedReplies.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: replyText
+                });
+
+                // Zapisz najpierw lokalnie jako backup
+                targetMsg.replies = updatedReplies;
+                saveMessagesToLocalStorage(messagesArray);
+
+                // Wyślij w tle do chmury
+                if (currentUser) {
+                    const msgDoc = doc(db, 'artifacts', appId, 'public', 'data', 'messages', replyTargetId);
+                    try {
+                        await updateDoc(msgDoc, {
+                            replies: updatedReplies
+                        });
+                    } catch (err) {
+                        console.error("Firestore Admin reply error:", err);
+                    }
+                }
+
+                document.getElementById('admin-reply-overlay').style.display = 'none';
+                openAdminPanel();
+            }
+        }
+
+        // --- SEND MESSAGE JS ---
+        function openSendMsg() {
+            document.getElementById('send-msg-overlay').style.display = 'flex';
+            document.getElementById('send-msg-nick').focus();
+        }
+
+        function closeSendMsg() {
+            document.getElementById('send-msg-overlay').style.display = 'none';
+            document.getElementById('send-msg-nick').value = "";
+            document.getElementById('send-msg-subject').value = "";
+            document.getElementById('send-msg-textarea').value = "";
+        }
+
+        // Submit new message directly to Firestore Cloud Storage / LocalStorage
+        async function submitMessage() {
+            const nick = document.getElementById('send-msg-nick').value.trim();
+            const subject = document.getElementById('send-msg-subject').value.trim();
+            const text = document.getElementById('send-msg-textarea').value.trim();
+
+            if (text !== "") {
+                const localId = "local_" + Date.now();
+                const newMessage = {
+                    id: localId,
+                    timestamp: new Date().toISOString(),
+                    time: new Date().toLocaleTimeString(),
+                    nick: nick || "Anonymous",
+                    subject: subject || "No Subject",
+                    text: text,
+                    replies: []
+                };
+
+                // Zapisz lokalnie w pamieci przeglądarki na stałe
+                messagesArray.push(newMessage);
+                saveMessagesToLocalStorage(messagesArray);
+
+                // Próba wysłania do Firestore
+                if (currentUser) {
+                    const messagesCol = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+                    try {
+                        const { id, ...firebasePayload } = newMessage; // Usuń id, bo Firebase wygeneruje własne
+                        await addDoc(messagesCol, firebasePayload);
+                    } catch (err) {
+                        console.error("Firestore save error:", err);
+                    }
+                }
+
+                // Clear fields
+                document.getElementById('send-msg-nick').value = "";
+                document.getElementById('send-msg-subject').value = "";
+                document.getElementById('send-msg-textarea').value = "";
+
+                // Success notification animation
+                const title = document.getElementById('send-msg-title');
+                title.innerText = "Message Sent! ✅";
+                title.style.color = "#2ecc71";
+
+                setTimeout(() => {
+                    closeSendMsg();
+                    title.innerText = "✉️ Message Sli4mePL";
+                    title.style.color = "#e67e22";
+                }, 1500);
+            }
+        }
+        
+        // --- DOWNLOAD WITH PASSWORD LOGIC ---
+        document.getElementById('bat-download-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('download-password-overlay').style.display = 'flex';
+            document.getElementById('download-password-input').focus();
+        });
+        
+        function checkDownloadPassword() {
+            const pass = document.getElementById('download-password-input').value;
+            if (pass === "1512") {
+                document.getElementById('download-hint-text').style.opacity = "0";
+                closeDownloadPasswordPrompt();
+                
+                const a = document.createElement('a');
+                a.href = "Sli4mePL_Script.bat";
+                a.download = "Sli4mePL_Script.bat";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                document.getElementById('download-password-input').value = "";
+                document.getElementById('download-password-input').style.borderColor = "red";
+                document.getElementById('download-hint-text').style.opacity = "1";
+                setTimeout(() => { document.getElementById('download-password-input').style.borderColor = "#a82eff"; }, 500);
+            }
+        }
+        
+        function closeDownloadPasswordPrompt() {
+            document.getElementById('download-password-overlay').style.display = 'none';
+            document.getElementById('download-password-input').value = "";
+            document.getElementById('download-hint-text').style.opacity = "0";
+        }
+        
+        document.getElementById('download-password-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkDownloadPassword();
+        });
+
+        // --- RYZEN DEMO ---
+        const pendriveBtnMenu = document.getElementById('pendrive-btn-menu');
+        pendriveBtnMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.innerText = "Inserting...";
+            this.disabled = true;
+            setTimeout(() => {
+                this.innerText = "🚀 Run Ryzen RTX Demo";
+                this.disabled = false;
+                this.onclick = function(e) {
+                    e.stopPropagation();
+                    document.getElementById('ryzen-demo-view').style.display = 'flex';
+                    ryzenAudio.play().catch(e => console.log("Ryzen audio play blocked"));
+                };
+            }, 2500);
+        });
+
+        document.getElementById('rtx-btn-demo').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('ryzen-demo-view').classList.add('broken-graphics');
+        });
+
+        document.getElementById('exit-demo-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('ryzen-demo-view').style.display = 'none';
+            document.getElementById('ryzen-demo-view').classList.remove('broken-graphics');
+            pendriveBtnMenu.innerText = "💾 Put PenDrive";
+            pendriveBtnMenu.onclick = null;
+            ryzenAudio.pause();
+            ryzenAudio.currentTime = 0;
+        });
+
+        // --- JUMP & OTHERS ---
+        document.getElementById('flashlight-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.body.classList.toggle('bright');
+            if (document.body.classList.contains('bright')) { document.body.classList.remove('night-mode'); } 
+            else { updateClock(); }
+            this.classList.add('do-jump');
+            setTimeout(() => this.classList.remove('do-jump'), 400);
+        });
+
+        const partyBtn = document.getElementById('party-btn');
+        partyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            confetti({ particleCount: 200, spread: 90, origin: { x: 0.9, y: 0.9 } });
+            partyBtn.classList.add('do-jump');
+            setTimeout(() => { partyBtn.style.opacity = '0'; setTimeout(() => partyBtn.style.display = 'none', 500); }, 1500);
+        });
+
+        // Przechowywanie ID aktywnego timera w celu jego wyczyszczenia przed uruchomieniem kolejnego
+        let easterEggTimeout = null;
+
+        function handleTitleClick() {
+            if (!funEnabled) return;
+            titleClickCount++;
+            const overlay = document.getElementById('white-screen');
+            const label = document.getElementById('secret-text');
+            
+            // Czyszczenie poprzedniego timera, aby zapobiec nagłemu losowemu zamykaniu nakładki
+            if (easterEggTimeout) {
+                clearTimeout(easterEggTimeout);
+            }
+            
+            if (titleClickCount === 1) {
+                label.innerText = "Don't Click Me :["; 
+                overlay.classList.add('active'); 
+                easterEggTimeout = setTimeout(() => overlay.classList.remove('active'), 1500);
+            } else if (titleClickCount === 2) {
+                label.innerText = "Why Did You Click Me >:c"; 
+                overlay.classList.add('active'); 
+                easterEggTimeout = setTimeout(() => overlay.classList.remove('active'), 1500);
+            } else if (titleClickCount === 3) {
+                label.innerText = "I Said Dont Click >:["; 
+                overlay.classList.add('active'); 
+                easterEggTimeout = setTimeout(() => overlay.classList.remove('active'), 1500);
+            } else {
+                label.innerText = "... i said something."; 
+                overlay.classList.add('active');
+                easterEggTimeout = setTimeout(() => { 
+                    document.body.innerHTML = ""; 
+                    document.body.style.backgroundColor = "black"; 
+                }, 2500);
+            }
+        }
+
+        document.getElementById('title-btn').addEventListener('click', (e) => { e.stopPropagation(); handleTitleClick(); });
+        document.getElementById('white-screen').addEventListener('click', (e) => { e.stopPropagation(); handleTitleClick(); });
+        document.getElementById('flip-screen-btn').addEventListener('click', (e) => { e.stopPropagation(); document.body.classList.toggle('upside-down'); });
+
+        // Event listeners for Enter key
+        document.getElementById('password-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkSecretPassword(); });
+        document.getElementById('admin-password-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAdminPassword(); });
+
+        // Bind modular functions to window so they are globally accessible in HTML attributes
+        window.initAudio = initAudio;
+        window.checkSecretPassword = checkSecretPassword;
+        window.closePasswordPrompt = closePasswordPrompt;
+        window.checkDownloadPassword = checkDownloadPassword;
+        window.closeDownloadPasswordPrompt = closeDownloadPasswordPrompt;
+        window.checkAdminPassword = checkAdminPassword;
+        window.closeAdminPasswordPrompt = closeAdminPasswordPrompt;
+        window.submitMessage = submitMessage;
+        window.closeSendMsg = closeSendMsg;
+        window.submitAdminReply = submitAdminReply;
+        window.openSendMsg = openSendMsg;
+        window.openAdminPasswordPrompt = openAdminPasswordPrompt;
+    </script>
+</body>
+</html>
